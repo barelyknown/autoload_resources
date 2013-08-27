@@ -4,10 +4,11 @@ module AutoloadResources
 
     def autoload_resources(action_name=params[:action])
       return unless self.class.autoload_procs[action_name]
+      value = instance_eval(&(self.class.autoload_procs[action_name]))
       self.class.autoload_instance_variable_names(action_name).each do |instance_variable_name|
         instance_variable_set(
           "@#{instance_variable_name}",
-          instance_eval(&(self.class.autoload_procs[action_name]))
+          value
         )
       end
     end
@@ -57,11 +58,7 @@ module AutoloadResources
 
       def default_create_proc
         Proc.new do
-          params_method = autoload_instance_variable_names(:create).find do |name|
-            self.respond_to? "#{name}_params"
-          end
-          return unless params_method
-          resource_class.new(send(params_method))
+          create_params_method and resource_class.new(send(create_params_method))
         end
       end
 
@@ -73,5 +70,15 @@ module AutoloadResources
       alias_method :for_action, :for_actions
 
     end
+
+  private
+    def create_params_method
+      self.class.autoload_instance_variable_names(:create).collect do |element|
+        element + "_params"
+      end.find do |params_method_name|
+        self.respond_to? params_method_name
+      end
+    end
+
   end
 end
