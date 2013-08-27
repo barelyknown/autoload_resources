@@ -12,10 +12,6 @@ module AutoloadResources
       end
     end
 
-    def autoload_base_class
-      self.class.autoload_base_class
-    end
-
     module ClassMethods
       
       def autoload_resources
@@ -54,9 +50,19 @@ module AutoloadResources
         {
           index: Proc.new { resource_class.all },
           new: Proc.new { resource_class.new },
-          create: Proc.new { resource_class.new(params[resource_class.model_name.element]) },
+          create: default_create_proc,
           [:show, :edit, :update, :destroy] => Proc.new { resource_class.find(params[:id]) }
         }
+      end
+
+      def default_create_proc
+        Proc.new do
+          params_method = autoload_instance_variable_names(:create).find do |name|
+            self.respond_to? "#{name}_params"
+          end
+          return unless params_method
+          resource_class.new(send(params_method))
+        end
       end
 
       def for_actions(actions, proc=nil, &block)

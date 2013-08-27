@@ -63,12 +63,12 @@ describe ExamplesController do
     expect(subject.instance_variable_get("@example")).to eq Example.new
   end
 
-  # [:show, :edit, :update, :destroy].each do |action_name|
-    it "should set the default for the :show action" do
-      subject.autoload_resources(:show)
+  [:show, :edit, :update, :destroy].each do |action_name|
+    it "should set the default for the #{action_name} action" do
+      subject.autoload_resources(action_name)
       expect(subject.instance_variable_get("@example")).to eq Example.find
     end
-  # end
+  end
 
   it "can set a custom block for an action" do
     described_class.autoload_resources do
