@@ -50,7 +50,7 @@ describe ExamplesController do
   end
 
   it "should know its base class" do
-    expect(described_class.autoload_base_class).to eq Example
+    expect(described_class.resource_class).to eq Example
   end
 
   it "should set the default for the index action" do

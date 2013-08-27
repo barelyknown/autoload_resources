@@ -2,6 +2,7 @@ require "rubygems"
 require "bundler/setup"
 
 require "autoload_resources"
+require "controller_resource_class"
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true

@@ -24,10 +24,6 @@ module AutoloadResources
         before_action :autoload_resources
       end
 
-      def autoload_base_class
-        controller_name.singularize.camelize.constantize
-      end
-
       def autoload_procs
         @autoload_procs ||= HashWithIndifferentAccess.new
       end
@@ -40,7 +36,7 @@ module AutoloadResources
       end
 
       def autoload_instance_variable_names(action_name)
-        autoload_base_class.ancestors.grep(Class).select do |klass|
+        resource_class.ancestors.grep(Class).select do |klass|
           klass != ActiveRecord::Base && klass.ancestors.include?(ActiveRecord::Base)
         end.collect do |klass|
           autoload_instance_variable_name(klass, action_name)
@@ -48,7 +44,7 @@ module AutoloadResources
       end
 
       def set_default_autoload_procs
-        return unless autoload_base_class
+        return unless resource_class
         default_autoload_procs.each do |actions, closure|
           for_actions(actions, closure)
         end
@@ -56,17 +52,15 @@ module AutoloadResources
 
       def default_autoload_procs
         {
-          index: Proc.new { autoload_base_class.all },
-          new: Proc.new { autoload_base_class.new },
-          create: Proc.new { autoload_base_class.new(params[autoload_base_class.model_name.element]) },
-          [:show, :edit, :update, :destroy] => Proc.new { autoload_base_class.find(params[:id]) }
+          index: Proc.new { resource_class.all },
+          new: Proc.new { resource_class.new },
+          create: Proc.new { resource_class.new(params[resource_class.model_name.element]) },
+          [:show, :edit, :update, :destroy] => Proc.new { resource_class.find(params[:id]) }
         }
       end
 
       def for_actions(actions, proc=nil, &block)
         Array(actions).each do |action|
-          puts "setting autoload method for #{action}"
-          puts "instance variable #{autoload_instance_variable_names(action)}"
           autoload_procs[action] = block || proc
         end
       end
