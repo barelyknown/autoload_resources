@@ -20,20 +20,27 @@ class Example < ActiveRecord::Base
   end
 end
 
-class ExamplesController
+class ActionController
+  class Base
+    def self.helper_method(method_name); end
+    def self.before_action(method); end
+  end
+end
+
+class ExamplesController < ActionController::Base
   include ControllerResourceClass::Able
   include AutoloadResources::Able
 
-  def self.before_action(method)
-  end
 
-  def self.controller_name
-    "examples"
-  end
+  # def self.controller_name
+  #   "examples"
+  # end
 
   def params
     { id: 3 }
   end
+
+  
 
 end
 

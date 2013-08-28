@@ -3,14 +3,20 @@ module AutoloadResources
     extend ActiveSupport::Concern
 
     def autoload_resources(action_name=params[:action])
-      return unless self.class.autoload_procs[action_name]
-      value = instance_eval(&(self.class.autoload_procs[action_name]))
+      proc = self.class.ancestors.grep(Class).select do |klass|
+        klass.ancestors.include?(ActionController::Base) && klass != ActionController::Base
+      end.collect do |klass|
+        klass.autoload_procs[action_name]
+      end.compact.first
+      return unless proc
+      value = instance_eval(&proc)
       self.class.autoload_instance_variable_names(action_name).each do |instance_variable_name|
         instance_variable_set(
           "@#{instance_variable_name}",
           value
         )
       end
+      value
     end
 
     module ClassMethods
@@ -58,7 +64,8 @@ module AutoloadResources
 
       def default_create_proc
         Proc.new do
-          create_params_method and resource_class.new(send(create_params_method))
+          params_method = self.class.create_params_method
+          params_method and resource_class.new(send(params_method))
         end
       end
 
@@ -69,15 +76,14 @@ module AutoloadResources
       end
       alias_method :for_action, :for_actions
 
-    end
-
-  private
-    def create_params_method
-      self.class.autoload_instance_variable_names(:create).collect do |element|
-        element + "_params"
-      end.find do |params_method_name|
-        self.respond_to? params_method_name
+      def create_params_method
+        autoload_instance_variable_names(:create).collect do |element|
+          element + "_params"
+        end.find do |params_method_name|
+          private_method_defined? params_method_name
+        end
       end
+
     end
 
   end
