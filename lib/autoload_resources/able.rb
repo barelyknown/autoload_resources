@@ -19,6 +19,11 @@ module AutoloadResources
       value
     end
 
+    def create_params
+      return {} unless defined? self.class.create_params_method
+      send self.class.create_params_method
+    end
+
     module ClassMethods
       
       def autoload_resources
@@ -43,7 +48,8 @@ module AutoloadResources
           klass != ActiveRecord::Base && klass.ancestors.include?(ActiveRecord::Base)
         end.collect do |klass|
           autoload_instance_variable_name(klass, action_name)
-        end
+        end + 
+        [action_name == "index" ? "collection" : "instance"]
       end
 
       def set_default_autoload_procs
